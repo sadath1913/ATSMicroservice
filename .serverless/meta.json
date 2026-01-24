@@ -1,0 +1,76 @@
+{
+  "C:\\Users\\sadat\\Desktop\\ATSMicroService\\serverless.yml": {
+    "versionFramework": "4.31.0",
+    "servicePath": "C:\\Users\\sadat\\Desktop\\ATSMicroService\\serverless.yml",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "service": "ats-microservice",
+      "provider": {
+        "name": "aws",
+        "runtime": "python3.9",
+        "stage": "dev",
+        "region": "us-east-1"
+      },
+      "plugins": [
+        "serverless-offline"
+      ],
+      "functions": {
+        "healthCheck": {
+          "handler": "handler.health_check",
+          "events": [
+            {
+              "http": {
+                "path": "health",
+                "method": "get"
+              }
+            }
+          ]
+        },
+        "getJobs": {
+          "handler": "handler.get_jobs",
+          "events": [
+            {
+              "http": {
+                "path": "jobs",
+                "method": "get"
+              }
+            }
+          ]
+        },
+        "createCandidate": {
+          "handler": "handler.create_candidate",
+          "events": [
+            {
+              "http": {
+                "path": "candidates",
+                "method": "post"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "python3.9",
+      "stage": "dev",
+      "region": "us-east-1"
+    },
+    "error": {
+      "message": "Unable to reach the Serverless API (fetch failed; Connect Timeout Error (attempted addresses: 64:ff9b::3693:3663:443, 18.211.55.66:443, 64:ff9b::12d3:3742:443, 54.147.54.99:443, timeout: 10000ms); code: UND_ERR_CONNECT_TIMEOUT).\nPlease verify your network connection and try again.",
+      "code": "AUTH_FAILED"
+    },
+    "serviceRawFile": "service: ats-microservice\r\n\r\nprovider:\r\n  name: aws\r\n  runtime: python3.9\r\n  stage: dev\r\n  region: us-east-1\r\n\r\nplugins:\r\n  - serverless-offline\r\n\r\nfunctions:\r\n  healthCheck:\r\n    handler: handler.health_check\r\n    events:\r\n      - http:\r\n          path: health\r\n          method: get\r\n\r\n  getJobs:\r\n    handler: handler.get_jobs\r\n    events:\r\n      - http:\r\n          path: jobs\r\n          method: get\r\n  createCandidate:\r\n    handler: handler.create_candidate\r\n    events:\r\n      - http:\r\n          path: candidates\r\n          method: post\r\n\r\n",
+    "command": [
+      "offline"
+    ],
+    "options": {
+      "telemetry": false
+    },
+    "serviceProviderAwsCfStackId": null,
+    "serviceProviderAwsCfStackCreated": null,
+    "serviceProviderAwsCfStackUpdated": null,
+    "serviceProviderAwsCfStackStatus": null,
+    "serviceProviderAwsCfStackOutputs": null
+  }
+}
