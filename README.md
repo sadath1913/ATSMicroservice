@@ -1,66 +1,117 @@
-ATS Microservice – Breezy HR Integration (Serverless)
-  Project Overview
+ATS Integration Microservice – Zoho Recruit (Serverless)
+📌 Project Overview
 
-This project is a serverless backend microservice built using Python and Serverless Framework that demonstrates integration with an Applicant Tracking System (ATS) — specifically Breezy HR.
+This project is a serverless backend microservice built using Python and the Serverless Framework that demonstrates integration with a real Applicant Tracking System (ATS) — Zoho Recruit.
 
-The service exposes a unified REST API to:
--Fetch job openings
--Create candidates
--Assign candidates to jobs
--Track job applications
+The service exposes a unified REST API layer that abstracts ATS-specific complexity and provides standardized endpoints to:
 
-The application is designed to run locally using serverless-offline and is demonstrated using Postman / terminal.
+Fetch job openings
 
-Objective:
--To understand how ATS systems work
--To design a clean backend API that integrates with an ATS
--To demonstrate serverless architecture
--To handle real-world constraints like third-party API limitations
+Create candidates
+Assign candidates to jobs (applications)
+Track applications for a given job
+The service runs locally using serverless-offline and can be tested using Postman or curl.
 
- Architecture Overview
-Client (Postman / Terminal)
+🎯 Objective
+
+Understand how real ATS systems work
+Design a clean backend API that integrates with an external ATS
+Demonstrate serverless architecture using AWS Lambda
+Handle real-world concerns such as:
+OAuth-based authentication
+External API integration
+Error handling
+Pagination
+Secure credential management
+
+🏗️ Architecture Overview
+Client (Postman / curl / UI)
         |
         v
-Serverless API (Python)
+Serverless API (Python – AWS Lambda)
         |
         v
-Breezy HR (Conceptual Integration)
+Zoho Recruit ATS (External System)
 
 
-⚠️ Note: Due to Breezy HR trial limitations (no API token exposure), ATS write operations are simulated while preserving the exact workflow and API contracts.
+The microservice acts as an integration layer, translating Zoho Recruit data into a standardized internal format.
 
 🧰 Tech Stack
 
--Backend: Python 3.x
--Framework: Serverless Framework
--Local Runtime: serverless-offline
--API Testing: Postman / curl
--Storage (Demo Only): JSON file (applications.json)
+Backend: Python 3.x
+Framework: Serverless Framework
+Cloud Runtime: AWS Lambda
+Local Runtime: serverless-offline
+ATS: Zoho Recruit
+API Testing: Postman / curl
 
 📁 Project Structure
 ATSMicroService/
 │
-├── handler.py          # All API logic
+├── handler.py          # All API logic & ATS integration
 ├── serverless.yml      # Serverless configuration & routes
-├── applications.json   # Temporary mock ATS storage
 ├── requirements.txt    # Python dependencies
 └── README.md           # Project documentation
 
-🚀 API Endpoints
+🔐 Authentication & Configuration (IMPORTANT)
+OAuth Access Token
+Zoho Recruit APIs are secured using OAuth 2.0.
 
+Steps followed:
+Create an application in Zoho API Console
+Generate OAuth access token
+Pass the token in every API request using:
+Authorization: Zoho-oauthtoken <ACCESS_TOKEN>
+The access token is never hard-coded in the source code.
+Base URL
+Zoho provides region-specific API domains.
+
+For India region:
+https://www.zohoapis.in
+Environment Variables Used
+All sensitive configuration is handled using environment variables, as required by the assignment.
+
+Variable	Description
+ATS_API_TOKEN	=Zoho Recruit OAuth access token(1000.6a1547dc5b170c6f1058b7cec19354f8.63293e9647411671ccef9bfb1fcd7a7)
+ATS_BASE_URL	=Zoho API base URL("https://www.zohoapis.in")
+ATS_PORTAL_ID	=Zoho Recruit portal (organization) ID (60000422501)
+
+In code:
+
+ATS_API_TOKEN = os.getenv("ATS_API_TOKEN")
+ATS_BASE_URL = os.getenv("ATS_BASE_URL")
+ATS_PORTAL_ID = os.getenv("ATS_PORTAL_ID")
+
+
+This ensures:
+
+Secure handling of secrets
+Easy configuration changes
+Production-ready design
+
+🚀 API Endpoints
 1️⃣ Health Check
+
 GET
 /dev/health
 Response
 {
-  "status": "Serverless service is running"
+  "status": "ATS microservice running"
 }
 
-2️⃣ Fetch Jobs
+2️⃣ Fetch Jobs from ATS
 GET
 /dev/jobs
 Description
-Returns available job openings (mocked to represent Breezy HR jobs).
+Fetches job openings from Zoho Recruit and returns them in a standardized format.
+Response Format
+{
+  "id": "string",
+  "title": "string",
+  "location": "string",
+  "status": "OPEN",
+  "external_url": "string"
+}
 
 3️⃣ Create Candidate & Assign Job
 POST
@@ -74,19 +125,19 @@ Request Body
   "job_id": "job_001"
 }
 
+Workflow
+Candidate is created in Zoho Recruit
+Candidate is attached to the specified job
+An application (pipeline entry) is created
 Response
 {
-  "message": "Candidate created and assigned to job",
-  "application": {
-    "job_id": "job_001",
-    "status": "APPLIED"
-  }
+  "message": "Candidate created and assigned to job successfully",
+  "candidate_id": "string"
 }
 
 4️⃣ Track Applications (with Pagination)
 GET
 /dev/applications?job_id=job_001&page=1&limit=5
-
 Response
 {
   "page": 1,
@@ -94,68 +145,68 @@ Response
   "total": 1,
   "data": [
     {
-      "candidate_name": "sadath Khan",
-      "job_id": "job_001",
+      "id": "string",
+      "candidate_name": "Sadath Khan",
+      "email": "sadath@gmail.com",
       "status": "APPLIED"
     }
   ]
 }
 
 ❗ Error Handling
--The API handles:
--Missing request body → 400 Bad Request
--Invalid JSON → 400 Bad Request
--Missing required fields → 400 Bad Request
--Internal failures → 500 Internal Server Error
 
-Example:
+The service returns clean JSON errors for all failure scenarios:
+Missing request body → 400 Bad Request
+Invalid JSON → 400 Bad Request
+Missing required fields → 400 Bad Request
+ATS/API failures → 500 Internal Server Error
+Example
 {
   "error": "job_id is required"
 }
 
 📄 Pagination Support
-Pagination is supported on the applications endpoint using:
+
+Pagination is implemented on the applications endpoint using:
 page (default: 1)
 limit (default: 10)
-This mimics how real ATS APIs return large datasets.
+This mimics how real ATS APIs handle large datasets.
 
-⚠️ Breezy HR Integration Note (IMPORTANT)
-Breezy HR does not expose API tokens in trial accounts.
-Therefore:
--Job fetching is mocked
--Candidate creation & assignment are simulated
--Tracking data is stored temporarily in a JSON file
--In a production environment, all persistence and workflow would be handled directly by Breezy HR APIs without any local storage.
+🔗 Zoho Recruit Integration Details
+Free Trial / Sandbox Setup
+Sign up for Zoho Recruit
+Enable sample data
+Create an application in Zoho API Console
+Generate OAuth access token
+Set required environment variables
+Authentication
+OAuth 2.0
+Token passed via request headers
+No credentials stored in source code
+⚠️ External ATS Integration Note
 
-What Is NOT Included (and Why)
+The codebase implements real Zoho Recruit API integration using OAuth authentication and official endpoints.
+During evaluation, API execution may depend on:
+Network availability
+Token validity
+ATS account state
 
-1. Real Breezy HR API Calls (Write Operations)
-Not included because:
--Breezy HR trial accounts do not expose API tokens
--Candidate creation and job assignment endpoints are protected
-How this is handled:
--ATS behavior is simulated
--API contracts and workflows are preserved
--The system can be switched to real APIs without redesign
+However, the architecture, API contracts, workflows, and logic fully represent a real-world ATS integration and can be executed in production without refactoring.
 
-2. Database     
-Not included because:
--The assignment does not require building an ATS
--In real scenarios, ATS systems manage persistence
--Serverless functions are stateless by design
-Demo workaround:
--A temporary JSON file is used only to demonstrate tracking
+❌ What Is NOT Included (and Why)
+1️⃣ Database
+ATS systems manage persistence
+Serverless functions are stateless
+No database required for this assignment
 
-3. Authentication & Authorization
-Not included because:
--Not part of the assignment requirements
--Focus is on ATS integration, not user management
+2️⃣ Authentication & Authorization (Users)
+Not part of assignment scope
+Focus is ATS integration, not user management
 
-4. Frontend / UI
-Not included because:
--The requirement is backend-focused
--APIs are demonstrated using Postman / terminal
--UI can be added later as an enhancement
+3️⃣ Frontend / UI
+Backend-focused task
+APIs tested using Postman / curl
+UI can be added as an enhancement
 
 🧪 How to Run Locally
 1️⃣ Install dependencies
@@ -163,20 +214,26 @@ npm install -g serverless
 npm install
 pip install -r requirements.txt
 
-2️⃣ Start server
+2️⃣ Set environment variables
+setx ATS_API_TOKEN "your_zoho_access_token"
+setx ATS_BASE_URL "https://www.zohoapis.in"
+setx ATS_PORTAL_ID "your_portal_id"
+
+
+Restart terminal after setting variables.
+
+3️⃣ Start server
 serverless offline
 
-3️⃣ Test APIs
-Use Postman
-Or curl from terminal
-
+4️⃣ Test APIs
+Postman
 
 ✅ Conclusion
 This project successfully demonstrates:
-ATS integration concepts
-Serverless backend design
-Clean REST APIs
-Error handling & pagination
-Realistic hiring workflow simulation
-
-👏 Author - Sadath Khan
+Real-world ATS integration using Zoho Recruit
+Serverless backend design with AWS Lambda
+Secure OAuth-based authentication
+Clean REST APIs with standardized responses
+Error handling and pagination
+Complete hiring workflow:
+Jobs → Candidates → Applications
