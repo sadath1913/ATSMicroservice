@@ -1,10 +1,17 @@
 service: ats-microservice
 
+frameworkVersion: "3"
+
 provider:
   name: aws
   runtime: python3.9
   stage: dev
   region: us-east-1
+
+  environment:
+    ATS_API_TOKEN: ${env:ATS_API_TOKEN}
+    ATS_BASE_URL: ${env:ATS_BASE_URL}
+    ATS_PORTAL_ID: ${env:ATS_PORTAL_ID}
 
 plugins:
   - serverless-offline
@@ -16,6 +23,7 @@ functions:
       - http:
           path: health
           method: get
+          cors: true
 
   getJobs:
     handler: handler.get_jobs
@@ -23,15 +31,20 @@ functions:
       - http:
           path: jobs
           method: get
+          cors: true
+
   createCandidate:
     handler: handler.create_candidate
     events:
       - http:
           path: candidates
           method: post
+          cors: true
+
   getApplications:
     handler: handler.get_applications
     events:
       - http:
           path: applications
           method: get
+          cors: true
